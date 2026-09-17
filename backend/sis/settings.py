@@ -6,7 +6,7 @@ SECRET_KEY = 'django-insecure-fg)24ui%6fzp=j@oc)0xl@$%$o#l70ww92+*gqxa)^i02i5f*6
 
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['*']
 
 
 INSTALLED_APPS = [
@@ -18,7 +18,9 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'rest_framework',
     'corsheaders',
-    'accounts'
+    'accounts',
+    'irrigation',
+    'administration'
 ]
 
 MIDDLEWARE = [
@@ -52,6 +54,7 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'sis.wsgi.application'
 CORS_ALLOW_ALL_ORIGINS = True
+AUTH_USER_MODEL = 'accounts.User'
 
 DATABASES = {
     'default': {
@@ -93,3 +96,11 @@ USE_TZ = True
 STATIC_URL = 'static/'
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+from datetime import timedelta
+SIMPLE_JWT = {
+    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=30),
+    'REFRESH_TOKEN_LIFETIME': timedelta(days=7),
+    'ROTATE_REFRESH_TOKENS': True,
+    'BLACKLIST_AFTER_ROTATION': True,
+}
