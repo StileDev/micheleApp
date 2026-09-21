@@ -45,7 +45,6 @@ class AuthProvider extends ChangeNotifier {
     notifyListeners();
 
     final result = await _authService.login(email: email, password: password);
-
     if (result.success) {
       await _loadFromStorage();
       status = AuthStatus.authenticated;
@@ -68,13 +67,7 @@ class AuthProvider extends ChangeNotifier {
     errorMessage = null;
     notifyListeners();
 
-    final result = await _authService.register(
-      fullName: fullName,
-      email: email,
-      phone: phone,
-      password: password,
-    );
-
+    final result = await _authService.register(fullName: fullName, email: email, phone: phone, password: password);
     if (result.success) {
       await _loadFromStorage();
       status = AuthStatus.authenticated;
@@ -87,14 +80,12 @@ class AuthProvider extends ChangeNotifier {
     return result.success;
   }
 
-  /// Déconnexion volontaire (bouton "Se déconnecter") : prévient le serveur.
   Future<void> logout() async {
     await _authService.logout();
     _reset();
     notifyListeners();
   }
 
-  /// Déconnexion forcée (session expirée) : appelée uniquement par ApiClient.
   Future<void> forceLogout() async {
     await _storage.clear();
     _reset();

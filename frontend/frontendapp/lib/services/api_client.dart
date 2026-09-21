@@ -2,7 +2,12 @@ import 'package:dio/dio.dart';
 import 'storage_service.dart';
 import '../core/app_globals.dart';
 
-const String baseUrl = 'http://172.21.227.167:8000';
+// Adresse du backend. À adapter selon l'environnement :
+//   Émulateur Android -> 'http://10.0.2.2:8000'
+//   Simulateur iOS     -> 'http://127.0.0.1:8000'
+//   Bureau Linux       -> 'http://127.0.0.1:8000'
+//   Test réel          -> URL du backend déployé (HTTPS)
+const String baseUrl = 'http://192.168.1.190:8000';
 
 class ApiClient {
   final StorageService storage = StorageService();
@@ -25,7 +30,6 @@ class ApiClient {
       onError: (error, handler) async {
         if (error.response?.statusCode == 401) {
           final newAccess = await _refreshAccessToken();
-
           if (newAccess != null) {
             error.requestOptions.headers['Authorization'] = 'Bearer $newAccess';
             try {
@@ -53,12 +57,9 @@ class ApiClient {
     if (refresh == null) return null;
 
     try {
-      final resp = await Dio(BaseOptions(baseUrl: baseUrl))
-          .post('/api/auth/token/refresh/', data: {'refresh': refresh});
-
+      final resp = await Dio(BaseOptions(baseUrl: baseUrl)).post('/api/auth/token/refresh/', data: {'refresh': refresh});
       final newAccess = resp.data['access'] as String;
       final newRefresh = resp.data['refresh'] as String? ?? refresh;
-
       await storage.saveTokens(access: newAccess, refresh: newRefresh);
       return newAccess;
     } catch (_) {
@@ -68,12 +69,9 @@ class ApiClient {
 
   Future<void> _forceLogoutAndRedirect() async {
     await authProvider.forceLogout();
-
     if (_isRedirecting) return;
     _isRedirecting = true;
-
     navigatorKey.currentState?.pushNamedAndRemoveUntil('/login', (route) => false);
-
     Future.delayed(const Duration(seconds: 1), () => _isRedirecting = false);
   }
 }

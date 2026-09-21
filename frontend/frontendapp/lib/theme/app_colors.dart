@@ -1,9 +1,5 @@
 import 'package:flutter/material.dart';
 
-/// Palette de couleurs de l'application, basée sur trois teintes
-/// principales : vert (végétal, croissance), bleu (eau, capteurs)
-/// et blanc (fond, lisibilité). Aucune couleur n'est utilisée en
-/// dégradé : chaque surface reste unie.
 class AppColors {
   AppColors._();
 

@@ -4,9 +4,8 @@ import '../core/app_globals.dart';
 import '../providers/auth_provider.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_text_styles.dart';
-import '../widgets/role_badge.dart';
+import 'role_badge.dart';
 
-/// Ouvre la fiche profil sous forme de panneau remontant du bas.
 Future<void> showProfileSheet(BuildContext context) {
   return showModalBottomSheet(
     context: context,
@@ -28,32 +27,20 @@ class ProfileSheet extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final auth = context.watch<AuthProvider>();
-    final initials = (auth.userName != null && auth.userName!.isNotEmpty)
-        ? auth.userName![0].toUpperCase()
-        : '?';
+    final initials = (auth.userName != null && auth.userName!.isNotEmpty) ? auth.userName![0].toUpperCase() : '?';
 
     return Container(
       padding: const EdgeInsets.fromLTRB(20, 12, 20, 28),
-      decoration: const BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(22)),
-      ),
+      decoration: const BoxDecoration(color: AppColors.surface, borderRadius: BorderRadius.vertical(top: Radius.circular(22))),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Container(
-            width: 40,
-            height: 4,
-            decoration: BoxDecoration(color: AppColors.line, borderRadius: BorderRadius.circular(2)),
-          ),
+          Container(width: 40, height: 4, decoration: BoxDecoration(color: AppColors.line, borderRadius: BorderRadius.circular(2))),
           const SizedBox(height: 20),
           CircleAvatar(
             radius: 34,
             backgroundColor: AppColors.greenSoft,
-            child: Text(
-              initials,
-              style: AppTextStyles.title(size: 26, color: AppColors.greenDark),
-            ),
+            child: Text(initials, style: AppTextStyles.title(size: 26, color: AppColors.greenDark)),
           ),
           const SizedBox(height: 12),
           Text(auth.userName ?? '', style: AppTextStyles.heading),
@@ -94,21 +81,13 @@ class _InfoLine extends StatelessWidget {
       width: double.infinity,
       padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 14),
       margin: const EdgeInsets.only(bottom: 8),
-      decoration: BoxDecoration(
-        color: AppColors.surfaceAlt,
-        borderRadius: BorderRadius.circular(12),
-      ),
+      decoration: BoxDecoration(color: AppColors.surfaceAlt, borderRadius: BorderRadius.circular(12)),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           Text(label, style: AppTextStyles.bodyMuted),
           Flexible(
-            child: Text(
-              value,
-              style: AppTextStyles.body.copyWith(fontWeight: FontWeight.w600),
-              textAlign: TextAlign.right,
-              overflow: TextOverflow.ellipsis,
-            ),
+            child: Text(value, style: AppTextStyles.body.copyWith(fontWeight: FontWeight.w600), textAlign: TextAlign.right, overflow: TextOverflow.ellipsis),
           ),
         ],
       ),

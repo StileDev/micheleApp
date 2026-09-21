@@ -12,9 +12,9 @@ class PrevisionResult {
 class PrevisionService {
   final ApiClient _client = ApiClient();
 
-  Future<PrevisionResult> fetchPrevision() async {
+  Future<PrevisionResult> fetchPrevision(int parcelleId) async {
     try {
-      final resp = await _client.dio.get('/irrigation/prevision/');
+      final resp = await _client.dio.get('/irrigation/parcelles/$parcelleId/prevision/');
       return PrevisionResult(success: true, data: PrevisionData.fromJson(resp.data));
     } on DioException catch (e) {
       return PrevisionResult(success: false, error: _extractError(e));
@@ -25,6 +25,6 @@ class PrevisionService {
     if (e.response?.data is Map && (e.response?.data as Map).containsKey('detail')) {
       return e.response!.data['detail'].toString();
     }
-    return "Impossible de charger la prévision. Vérifiez votre connexion.";
+    return "Impossible de charger la prévision.";
   }
 }

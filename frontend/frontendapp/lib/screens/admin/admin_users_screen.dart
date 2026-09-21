@@ -38,14 +38,10 @@ class _AdminUsersScreenState extends State<AdminUsersScreen> {
         content: Text('Voulez-vous vraiment désactiver le compte de $name ?'),
         actions: [
           TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Annuler')),
-          TextButton(
-            onPressed: () => Navigator.pop(context, true),
-            child: const Text('Désactiver', style: TextStyle(color: AppColors.danger)),
-          ),
+          TextButton(onPressed: () => Navigator.pop(context, true), child: const Text('Désactiver', style: TextStyle(color: AppColors.danger))),
         ],
       ),
     );
-
     if (confirmed == true && context.mounted) {
       await context.read<AdminProvider>().deactivateUser(id);
     }
@@ -72,18 +68,9 @@ class _AdminUsersScreenState extends State<AdminUsersScreen> {
                 filled: true,
                 fillColor: AppColors.surfaceAlt,
                 contentPadding: const EdgeInsets.symmetric(vertical: 12),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  borderSide: const BorderSide(color: AppColors.line),
-                ),
-                enabledBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  borderSide: const BorderSide(color: AppColors.line),
-                ),
-                focusedBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  borderSide: const BorderSide(color: AppColors.blue, width: 1.4),
-                ),
+                border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: AppColors.line)),
+                enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: AppColors.line)),
+                focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: AppColors.blue, width: 1.4)),
               ),
             ),
           ),
@@ -101,20 +88,14 @@ class _AdminUsersScreenState extends State<AdminUsersScreen> {
                       children: [
                         Text(provider.errorMessage!, style: const TextStyle(color: AppColors.danger, fontSize: 13), textAlign: TextAlign.center),
                         const SizedBox(height: 14),
-                        PrimaryButton(
-                          label: 'Réessayer',
-                          color: AppColors.blue,
-                          onPressed: () => context.read<AdminProvider>().fetchUsers(),
-                        ),
+                        PrimaryButton(label: 'Réessayer', color: AppColors.blue, onPressed: () => context.read<AdminProvider>().fetchUsers()),
                       ],
                     ),
                   ),
                 );
               }
               if (provider.users.isEmpty) {
-                return const Center(
-                  child: Text('Aucun utilisateur trouvé', style: AppTextStyles.bodyMuted),
-                );
+                return const Center(child: Text('Aucun utilisateur trouvé', style: AppTextStyles.bodyMuted));
               }
 
               return ListView.separated(
@@ -128,18 +109,10 @@ class _AdminUsersScreenState extends State<AdminUsersScreen> {
 
                   return Container(
                     padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-                    decoration: BoxDecoration(
-                      color: AppColors.surface,
-                      border: Border.all(color: AppColors.line),
-                      borderRadius: BorderRadius.circular(14),
-                    ),
+                    decoration: BoxDecoration(color: AppColors.surface, border: Border.all(color: AppColors.line), borderRadius: BorderRadius.circular(14)),
                     child: Row(
                       children: [
-                        CircleAvatar(
-                          radius: 18,
-                          backgroundColor: AppColors.blueSoft,
-                          child: Text(initials, style: const TextStyle(color: AppColors.blueDark, fontWeight: FontWeight.w700, fontSize: 13)),
-                        ),
+                        CircleAvatar(radius: 18, backgroundColor: AppColors.blueSoft, child: Text(initials, style: const TextStyle(color: AppColors.blueDark, fontWeight: FontWeight.w700, fontSize: 13))),
                         const SizedBox(width: 12),
                         Expanded(
                           child: Column(
@@ -152,10 +125,7 @@ class _AdminUsersScreenState extends State<AdminUsersScreen> {
                           ),
                         ),
                         RoleBadge(role: user.role),
-                        IconButton(
-                          icon: const Icon(Icons.more_vert, size: 18, color: AppColors.muted),
-                          onPressed: () => _confirmDeactivate(context, user.id, user.fullName),
-                        ),
+                        IconButton(icon: const Icon(Icons.more_vert, size: 18, color: AppColors.muted), onPressed: () => _confirmDeactivate(context, user.id, user.fullName)),
                       ],
                     ),
                   );

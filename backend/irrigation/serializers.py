@@ -1,29 +1,59 @@
 from rest_framework import serializers
-from .models import Mesure, EtatIrrigation
+from .models import Parcelle, Materiel, Mesure, EtatParcelle, ActionLog
 
 
-class EtatIrrigationSerializer(serializers.ModelSerializer):
+class ParcelleSerializer(serializers.ModelSerializer):
     class Meta:
-        model = EtatIrrigation
-        fields = ['actif', 'mode', 'demarre_a', 'duree_minutes']
+        model = Parcelle
+        fields = ['id', 'nom', 'superficie', 'culture', 'latitude', 'longitude', 'created_at']
+        read_only_fields = ['id', 'created_at']
 
 
-class DashboardSerializer(serializers.Serializer):
-    parcelle_nom = serializers.CharField()
-    humidite_sol = serializers.FloatField(allow_null=True)
+class MaterielSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Materiel
+        fields = ['id', 'nom', 'created_at']
+        read_only_fields = ['id', 'created_at']
+
+
+class EtatParcelleSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = EtatParcelle
+        fields = [
+            'iot_connecte',
+            'irrigation_active', 'irrigation_demarree_a',
+            'drainage_actif', 'drainage_demarre_a',
+        ]
+
+
+class ParcelleDetailSerializer(serializers.Serializer):
+    """Réponse complète pour l'écran 'Gestion état parcelle et matériels' :
+    infos de la parcelle, dernières mesures, état, liste des matériels."""
+
+    id = serializers.IntegerField()
+    nom = serializers.CharField()
+    etat = EtatParcelleSerializer()
     temperature = serializers.FloatField(allow_null=True)
     humidite_air = serializers.FloatField(allow_null=True)
+    humidite_sol = serializers.FloatField(allow_null=True)
     ph_sol = serializers.FloatField(allow_null=True)
     derniere_mesure = serializers.DateTimeField(allow_null=True)
-    etat_irrigation = EtatIrrigationSerializer()
+    materiels = MaterielSerializer(many=True)
 
 
 class MesureCreateSerializer(serializers.ModelSerializer):
-    """Utilisé par le capteur IoT (ESP32) pour pousser une nouvelle mesure."""
+    """Utilisé par le capteur IoT (ESP32) pour pousser une nouvelle mesure
+    sur une parcelle donnée."""
 
     class Meta:
         model = Mesure
         fields = ['humidite_sol', 'temperature', 'humidite_air', 'ph_sol']
+
+
+class ActionLogSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ActionLog
+        fields = ['id', 'type_action', 'statut', 'created_at']
 
 
 class RaisonPrevisionSerializer(serializers.Serializer):
@@ -41,15 +71,3 @@ class PrevisionSerializer(serializers.Serializer):
     message = serializers.CharField()
     raisons = RaisonPrevisionSerializer(many=True)
     courbe = PointPrevisionSerializer(many=True)
-
-
-class ModeUpdateSerializer(serializers.Serializer):
-    mode = serializers.ChoiceField(choices=EtatIrrigation.MODE_CHOICES)
-
-
-class AutoToggleSerializer(serializers.Serializer):
-    actif = serializers.BooleanField()
-
-
-class DeclencherSerializer(serializers.Serializer):
-    duree_minutes = serializers.IntegerField(min_value=1, max_value=180)

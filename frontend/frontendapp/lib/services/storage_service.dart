@@ -28,34 +28,19 @@ class StorageService {
     await prefs.setString(_roleKey, role);
   }
 
-  /// Sauvegarde les deux tokens après un rafraîchissement (Django renvoie
-  /// un nouveau refresh token à chaque rotation).
   Future<void> saveTokens({required String access, required String refresh}) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString(_accessKey, access);
     await prefs.setString(_refreshKey, refresh);
   }
 
-  Future<String?> getAccessToken() async =>
-      (await SharedPreferences.getInstance()).getString(_accessKey);
-
-  Future<String?> getRefreshToken() async =>
-      (await SharedPreferences.getInstance()).getString(_refreshKey);
-
-  Future<int?> getUserId() async =>
-      (await SharedPreferences.getInstance()).getInt(_idKey);
-
-  Future<String?> getUserName() async =>
-      (await SharedPreferences.getInstance()).getString(_nameKey);
-
-  Future<String?> getUserEmail() async =>
-      (await SharedPreferences.getInstance()).getString(_emailKey);
-
-  Future<String?> getUserPhone() async =>
-      (await SharedPreferences.getInstance()).getString(_phoneKey);
-
-  Future<String?> getUserRole() async =>
-      (await SharedPreferences.getInstance()).getString(_roleKey);
+  Future<String?> getAccessToken() async => (await SharedPreferences.getInstance()).getString(_accessKey);
+  Future<String?> getRefreshToken() async => (await SharedPreferences.getInstance()).getString(_refreshKey);
+  Future<int?> getUserId() async => (await SharedPreferences.getInstance()).getInt(_idKey);
+  Future<String?> getUserName() async => (await SharedPreferences.getInstance()).getString(_nameKey);
+  Future<String?> getUserEmail() async => (await SharedPreferences.getInstance()).getString(_emailKey);
+  Future<String?> getUserPhone() async => (await SharedPreferences.getInstance()).getString(_phoneKey);
+  Future<String?> getUserRole() async => (await SharedPreferences.getInstance()).getString(_roleKey);
 
   Future<void> clear() async {
     final prefs = await SharedPreferences.getInstance();

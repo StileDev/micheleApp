@@ -9,13 +9,12 @@ class PrevisionProvider extends ChangeNotifier {
   bool isLoading = false;
   String? errorMessage;
 
-  Future<void> fetchPrevision() async {
+  Future<void> fetchPrevision(int parcelleId) async {
     isLoading = true;
     errorMessage = null;
     notifyListeners();
 
-    final result = await _service.fetchPrevision();
-
+    final result = await _service.fetchPrevision(parcelleId);
     if (result.success) {
       data = result.data;
     } else {

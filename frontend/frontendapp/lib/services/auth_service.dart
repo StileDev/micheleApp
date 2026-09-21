@@ -43,25 +43,32 @@ class AuthService {
 
   Future<AuthResult> login({required String email, required String password}) async {
     try {
-      final resp = await _client.dio.post('/api/auth/login/', data: {
-        'email': email,
-        'password': password,
-      });
+      final resp = await _client.dio.post('/api/auth/login/', data: {'email': email, 'password': password});
+      final user = resp.data['user'] as Map<String, dynamic>?;
 
-      final me = await _client.dio.get(
-        '/api/auth/me/',
-        options: Options(headers: {'Authorization': 'Bearer ${resp.data['access']}'}),
-      );
-
-      await _storage.saveSession(
-        access: resp.data['access'],
-        refresh: resp.data['refresh'],
-        id: me.data['id'] ?? 0,
-        fullName: me.data['full_name'] ?? '',
-        email: me.data['email'] ?? '',
-        phone: me.data['phone'] ?? '',
-        role: me.data['role'] ?? 'agriculteur',
-      );
+      if (user != null) {
+        await _storage.saveSession(
+          access: resp.data['access'],
+          refresh: resp.data['refresh'],
+          id: user['id'] ?? 0,
+          fullName: user['full_name'] ?? '',
+          email: user['email'] ?? '',
+          phone: user['phone'] ?? '',
+          role: user['role'] ?? 'agriculteur',
+        );
+      } else {
+        // Compatibilité si /login/ ne renvoie pas encore l'utilisateur.
+        final me = await _client.dio.get('/api/auth/me/', options: Options(headers: {'Authorization': 'Bearer ${resp.data['access']}'}));
+        await _storage.saveSession(
+          access: resp.data['access'],
+          refresh: resp.data['refresh'],
+          id: me.data['id'] ?? 0,
+          fullName: me.data['full_name'] ?? '',
+          email: me.data['email'] ?? '',
+          phone: me.data['phone'] ?? '',
+          role: me.data['role'] ?? 'agriculteur',
+        );
+      }
       return AuthResult(success: true);
     } on DioException catch (e) {
       return AuthResult(success: false, error: _extractError(e));
@@ -74,9 +81,7 @@ class AuthService {
       if (refresh != null) {
         await _client.dio.post('/api/auth/logout/', data: {'refresh': refresh});
       }
-    } catch (_) {
-      // La session locale est nettoyée même si l'appel serveur échoue.
-    }
+    } catch (_) {}
     await _storage.clear();
   }
 

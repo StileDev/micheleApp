@@ -15,7 +15,6 @@ class AdminProvider extends ChangeNotifier {
     notifyListeners();
 
     final result = await _service.fetchUsers(query: query);
-
     if (result.success) {
       users = result.users;
     } else {

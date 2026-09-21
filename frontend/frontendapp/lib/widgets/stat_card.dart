@@ -7,23 +7,13 @@ class StatCard extends StatelessWidget {
   final String value;
   final String label;
 
-  const StatCard({
-    super.key,
-    required this.icon,
-    required this.color,
-    required this.value,
-    required this.label,
-  });
+  const StatCard({super.key, required this.icon, required this.color, required this.value, required this.label});
 
   @override
   Widget build(BuildContext context) {
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 10),
-      decoration: BoxDecoration(
-        color: AppColors.surface,
-        border: Border.all(color: AppColors.line),
-        borderRadius: BorderRadius.circular(14),
-      ),
+      decoration: BoxDecoration(color: AppColors.surface, border: Border.all(color: AppColors.line), borderRadius: BorderRadius.circular(14)),
       child: Column(
         children: [
           Icon(icon, size: 18, color: color),

@@ -20,13 +20,8 @@ class AdminService {
 
   Future<AdminListResult> fetchUsers({String query = ''}) async {
     try {
-      final resp = await _client.dio.get(
-        '/api/auth/users/',
-        queryParameters: query.isNotEmpty ? {'search': query} : null,
-      );
-      final list = (resp.data as List<dynamic>)
-          .map((e) => ManageUserModel.fromJson(e as Map<String, dynamic>))
-          .toList();
+      final resp = await _client.dio.get('/api/admin/users/', queryParameters: query.isNotEmpty ? {'search': query} : null);
+      final list = (resp.data as List<dynamic>).map((e) => ManageUserModel.fromJson(e as Map<String, dynamic>)).toList();
       return AdminListResult(success: true, users: list);
     } on DioException catch (e) {
       return AdminListResult(success: false, error: _extractError(e));
@@ -35,7 +30,7 @@ class AdminService {
 
   Future<AdminActionResult> deactivateUser(int id) async {
     try {
-      await _client.dio.delete('/api/auth/users/$id/');
+      await _client.dio.delete('/api/admin/users/$id/');
       return AdminActionResult(success: true);
     } on DioException catch (e) {
       return AdminActionResult(success: false, error: _extractError(e));

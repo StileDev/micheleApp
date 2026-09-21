@@ -11,17 +11,16 @@ class AdminShell extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final auth = context.watch<AuthProvider>();
-    final initials = (auth.userName != null && auth.userName!.isNotEmpty)
-        ? auth.userName![0].toUpperCase()
-        : '?';
+    context.watch<AuthProvider>();
 
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppTopBar(
         title: 'Administration',
-        initials: initials,
-        onAvatarTap: () => showProfileSheet(context),
+        trailing: GestureDetector(
+          onTap: () => showProfileSheet(context),
+          child: const CircleAvatar(radius: 16, backgroundColor: AppColors.blueSoft, child: Icon(Icons.person, size: 17, color: AppColors.blueDark)),
+        ),
       ),
       body: const AdminUsersScreen(),
     );

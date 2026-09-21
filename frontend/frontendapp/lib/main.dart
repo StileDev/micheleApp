@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'core/app_globals.dart';
-import 'providers/dashboard_provider.dart';
+import 'providers/parcelle_list_provider.dart';
+import 'providers/parcelle_detail_provider.dart';
 import 'providers/prevision_provider.dart';
-import 'providers/irrigation_provider.dart';
+import 'providers/historique_provider.dart';
 import 'providers/admin_provider.dart';
 import 'theme/app_colors.dart';
 import 'screens/splash_screen.dart';
@@ -19,9 +20,10 @@ class MyApp extends StatelessWidget {
     return MultiProvider(
       providers: [
         ChangeNotifierProvider.value(value: authProvider),
-        ChangeNotifierProvider(create: (_) => DashboardProvider()),
+        ChangeNotifierProvider(create: (_) => ParcelleListProvider()),
+        ChangeNotifierProvider(create: (_) => ParcelleDetailProvider()),
         ChangeNotifierProvider(create: (_) => PrevisionProvider()),
-        ChangeNotifierProvider(create: (_) => IrrigationProvider()),
+        ChangeNotifierProvider(create: (_) => HistoriqueProvider()),
         ChangeNotifierProvider(create: (_) => AdminProvider()),
       ],
       child: MaterialApp(
@@ -31,12 +33,7 @@ class MyApp extends StatelessWidget {
         theme: ThemeData(
           useMaterial3: true,
           scaffoldBackgroundColor: AppColors.background,
-          colorScheme: ColorScheme.fromSeed(
-            seedColor: AppColors.green,
-            primary: AppColors.green,
-            secondary: AppColors.blue,
-            surface: AppColors.surface,
-          ),
+          colorScheme: ColorScheme.fromSeed(seedColor: AppColors.green, primary: AppColors.green, secondary: AppColors.blue, surface: AppColors.surface),
           fontFamily: 'Roboto',
         ),
         home: const SplashScreen(),
