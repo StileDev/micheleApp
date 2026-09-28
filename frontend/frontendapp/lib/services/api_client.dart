@@ -2,7 +2,7 @@ import 'package:dio/dio.dart';
 import 'storage_service.dart';
 import '../core/app_globals.dart';
 
-const String baseUrl = 'http://10.221.152.167:8000';
+const String baseUrl = 'http://10.144.82.167:8000';
 
 class ApiClient {
   final StorageService storage = StorageService();

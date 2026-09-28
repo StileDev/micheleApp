@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../providers/admin_parcelle_provider.dart';
+import '../../l10n/app_strings.dart';
 import '../../theme/app_colors.dart';
 import '../../theme/app_text_styles.dart';
 import '../../widgets/app_top_bar.dart';
@@ -31,14 +32,18 @@ class _AdminParcellesScreenState extends State<AdminParcellesScreen> {
   }
 
   Future<void> _confirmDelete(int id, String nom) async {
+    final s = S.read(context);
     final confirmed = await showDialog<bool>(
       context: context,
-      builder: (_) => AlertDialog(
-        title: const Text('Supprimer la parcelle'),
-        content: Text('Voulez-vous vraiment supprimer "$nom" ? Cette action est définitive et supprimera aussi ses mesures et son historique.'),
+      builder: (dialogContext) => AlertDialog(
+        title: Text(s.adminConfirmDeleteParcelleTitle),
+        content: Text(s.adminConfirmDeleteParcelleBody(nom)),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Annuler')),
-          TextButton(onPressed: () => Navigator.pop(context, true), child: const Text('Supprimer', style: TextStyle(color: AppColors.danger))),
+          TextButton(onPressed: () => Navigator.pop(dialogContext, false), child: Text(s.cancel)),
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext, true),
+            child: Text(s.delete, style: const TextStyle(color: AppColors.danger)),
+          ),
         ],
       ),
     );
@@ -50,10 +55,11 @@ class _AdminParcellesScreenState extends State<AdminParcellesScreen> {
   @override
   Widget build(BuildContext context) {
     final provider = context.watch<AdminParcelleProvider>();
+    final s = S.of(context);
 
     return Scaffold(
       backgroundColor: AppColors.background,
-      appBar: const AppTopBar(title: 'Parcelles', showBack: true),
+      appBar: AppTopBar(title: s.adminParcellesTitle, showBack: true),
       body: RefreshIndicator(
         onRefresh: () => context.read<AdminParcelleProvider>().fetchParcelles(query: _search.text),
         child: Column(
@@ -65,7 +71,7 @@ class _AdminParcellesScreenState extends State<AdminParcellesScreen> {
                 onSubmitted: (v) => context.read<AdminParcelleProvider>().fetchParcelles(query: v),
                 style: AppTextStyles.body,
                 decoration: InputDecoration(
-                  hintText: 'Rechercher une parcelle ou un propriétaire',
+                  hintText: s.adminSearchParcelle,
                   hintStyle: const TextStyle(color: AppColors.muted, fontSize: 14),
                   prefixIcon: const Icon(Icons.search, size: 20, color: AppColors.muted),
                   filled: true,
@@ -91,14 +97,18 @@ class _AdminParcellesScreenState extends State<AdminParcellesScreen> {
                         children: [
                           Text(provider.errorMessage!, style: const TextStyle(color: AppColors.danger, fontSize: 13), textAlign: TextAlign.center),
                           const SizedBox(height: 14),
-                          PrimaryButton(label: 'Réessayer', color: AppColors.blue, onPressed: () => context.read<AdminParcelleProvider>().fetchParcelles()),
+                          PrimaryButton(
+                            label: s.retry,
+                            color: AppColors.blue,
+                            onPressed: () => context.read<AdminParcelleProvider>().fetchParcelles(),
+                          ),
                         ],
                       ),
                     ),
                   );
                 }
                 if (provider.parcelles.isEmpty) {
-                  return const Center(child: Text('Aucune parcelle enregistrée', style: AppTextStyles.bodyMuted));
+                  return Center(child: Text(s.adminNoParcelles, style: AppTextStyles.bodyMuted));
                 }
 
                 return ListView.separated(
@@ -110,7 +120,11 @@ class _AdminParcellesScreenState extends State<AdminParcellesScreen> {
                     final p = provider.parcelles[index];
                     return Container(
                       padding: const EdgeInsets.all(14),
-                      decoration: BoxDecoration(color: AppColors.surface, border: Border.all(color: AppColors.line), borderRadius: BorderRadius.circular(14)),
+                      decoration: BoxDecoration(
+                        color: AppColors.surface,
+                        border: Border.all(color: AppColors.line),
+                        borderRadius: BorderRadius.circular(14),
+                      ),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
@@ -121,15 +135,19 @@ class _AdminParcellesScreenState extends State<AdminParcellesScreen> {
                                 child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
-                                    Text('Parcelle N°${p.id}', style: AppTextStyles.caption),
+                                    Text(s.parcelleNumber(p.id), style: AppTextStyles.caption),
                                     Text(p.nom, style: const TextStyle(fontSize: 14.5, fontWeight: FontWeight.w700, color: AppColors.greenDark)),
                                   ],
                                 ),
                               ),
                               TextButton(
                                 onPressed: () => _confirmDelete(p.id, p.nom),
-                                style: TextButton.styleFrom(backgroundColor: AppColors.dangerSoft, foregroundColor: AppColors.danger, minimumSize: const Size(0, 32)),
-                                child: const Text('Supprimer', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600)),
+                                style: TextButton.styleFrom(
+                                  backgroundColor: AppColors.dangerSoft,
+                                  foregroundColor: AppColors.danger,
+                                  minimumSize: const Size(0, 32),
+                                ),
+                                child: Text(s.delete, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600)),
                               ),
                             ],
                           ),
@@ -138,12 +156,19 @@ class _AdminParcellesScreenState extends State<AdminParcellesScreen> {
                             children: [
                               const Icon(Icons.person_outline, size: 15, color: AppColors.muted),
                               const SizedBox(width: 6),
-                              Expanded(child: Text('${p.proprietaireNom} — ${p.proprietaireEmail}', style: AppTextStyles.bodyMuted, overflow: TextOverflow.ellipsis)),
+                              Expanded(
+                                child: Text(
+                                  '${p.proprietaireNom} — ${p.proprietaireEmail}',
+                                  style: AppTextStyles.bodyMuted,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
                             ],
                           ),
                           const SizedBox(height: 4),
                           Text(
-                            'Superficie: ${p.superficie != null ? '${p.superficie!.toStringAsFixed(2)} ha' : 'Non spécifiée'} · Culture: ${p.culture.isNotEmpty ? p.culture : 'Non spécifiée'}',
+                            '${s.surface}: ${p.superficie != null ? '${p.superficie!.toStringAsFixed(2)} ha' : s.notSpecified} · '
+                            '${s.culture}: ${p.culture.isNotEmpty ? p.culture : s.notSpecified}',
                             style: AppTextStyles.bodyMuted,
                           ),
                         ],

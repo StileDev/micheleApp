@@ -237,4 +237,8 @@ The application distinguishes two types of accounts: farmers, who manage their o
       'Do you really want to delete "$nom"? This is permanent and will also delete its readings and history.');
   String get adminNoUsers => _t('Aucun utilisateur trouvé', 'No user found');
   String get adminNoParcelles => _t('Aucune parcelle enregistrée', 'No plot registered');
+  String get emailShort => 'Email';
+  String get phoneShort => _t('Téléphone', 'Phone');
+  String get roleLabel => _t('Rôle', 'Role');
+  String get create => _t('Créer', 'Create');
 }

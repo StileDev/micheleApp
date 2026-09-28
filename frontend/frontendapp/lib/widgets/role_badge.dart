@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../l10n/app_strings.dart';
 import '../theme/app_colors.dart';
 
 class RoleBadge extends StatelessWidget {
@@ -8,10 +9,11 @@ class RoleBadge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final s = S.of(context);
     final isAdmin = role == 'administrateur';
     final color = isAdmin ? AppColors.blueDark : AppColors.greenDark;
     final bg = isAdmin ? AppColors.blueSoft : AppColors.greenSoft;
-    final label = isAdmin ? 'Administrateur' : 'Agriculteur';
+    final label = isAdmin ? s.roleAdmin : s.roleFarmer;
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),

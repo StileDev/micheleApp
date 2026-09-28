@@ -10,6 +10,7 @@ class PrevisionProvider extends ChangeNotifier {
   String? errorMessage;
 
   Future<void> fetchPrevision(int parcelleId) async {
+    data = null; // évite d'afficher la prévision d'une autre parcelle
     isLoading = true;
     errorMessage = null;
     notifyListeners();

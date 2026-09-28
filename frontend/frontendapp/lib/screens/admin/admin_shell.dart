@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../providers/auth_provider.dart';
+import '../../l10n/app_strings.dart';
 import '../../theme/app_colors.dart';
 import '../../theme/app_text_styles.dart';
 import '../../widgets/app_top_bar.dart';
@@ -14,14 +15,19 @@ class AdminShell extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     context.watch<AuthProvider>();
+    final s = S.of(context);
 
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppTopBar(
-        title: 'Administration',
+        title: s.adminTitle,
         trailing: GestureDetector(
           onTap: () => showProfileSheet(context),
-          child: const CircleAvatar(radius: 16, backgroundColor: AppColors.blueSoft, child: Icon(Icons.person, size: 17, color: AppColors.blueDark)),
+          child: const CircleAvatar(
+            radius: 16,
+            backgroundColor: AppColors.blueSoft,
+            child: Icon(Icons.person, size: 17, color: AppColors.blueDark),
+          ),
         ),
       ),
       body: Padding(
@@ -29,14 +35,14 @@ class AdminShell extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            const Text('Que voulez-vous gérer ?', style: AppTextStyles.bodyMuted),
+            Text(s.adminChooseWhat, style: AppTextStyles.bodyMuted),
             const SizedBox(height: 16),
             Row(
               children: [
                 Expanded(
                   child: _AdminTile(
                     icon: Icons.grass_outlined,
-                    label: 'Parcelles',
+                    label: s.adminParcellesTitle,
                     color: AppColors.green,
                     onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const AdminParcellesScreen())),
                   ),
@@ -45,7 +51,7 @@ class AdminShell extends StatelessWidget {
                 Expanded(
                   child: _AdminTile(
                     icon: Icons.people_outline,
-                    label: 'Utilisateurs',
+                    label: s.adminUsersTitle,
                     color: AppColors.blue,
                     onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const AdminUsersScreen())),
                   ),
@@ -74,7 +80,11 @@ class _AdminTile extends StatelessWidget {
       borderRadius: BorderRadius.circular(16),
       child: Container(
         padding: const EdgeInsets.symmetric(vertical: 28),
-        decoration: BoxDecoration(color: AppColors.surface, border: Border.all(color: AppColors.line), borderRadius: BorderRadius.circular(16)),
+        decoration: BoxDecoration(
+          color: AppColors.surface,
+          border: Border.all(color: AppColors.line),
+          borderRadius: BorderRadius.circular(16),
+        ),
         child: Column(
           children: [
             Icon(icon, size: 28, color: color),

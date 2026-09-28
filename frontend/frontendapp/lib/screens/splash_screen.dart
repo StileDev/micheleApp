@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/auth_provider.dart';
+import '../l10n/app_strings.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_text_styles.dart';
 import 'login_screen.dart';
@@ -29,10 +30,18 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
 
     _controller = AnimationController(vsync: this, duration: const Duration(milliseconds: 1600));
 
-    _logoScale = Tween<double>(begin: 0.6, end: 1.0).animate(CurvedAnimation(parent: _controller, curve: const Interval(0.0, 0.6, curve: Curves.easeOutBack)));
-    _logoOpacity = Tween<double>(begin: 0.0, end: 1.0).animate(CurvedAnimation(parent: _controller, curve: const Interval(0.0, 0.4, curve: Curves.easeOut)));
-    _textSlide = Tween<Offset>(begin: const Offset(0, 0.3), end: Offset.zero).animate(CurvedAnimation(parent: _controller, curve: const Interval(0.45, 0.85, curve: Curves.easeOut)));
-    _textOpacity = Tween<double>(begin: 0.0, end: 1.0).animate(CurvedAnimation(parent: _controller, curve: const Interval(0.45, 0.85, curve: Curves.easeOut)));
+    _logoScale = Tween<double>(begin: 0.6, end: 1.0).animate(
+      CurvedAnimation(parent: _controller, curve: const Interval(0.0, 0.6, curve: Curves.easeOutBack)),
+    );
+    _logoOpacity = Tween<double>(begin: 0.0, end: 1.0).animate(
+      CurvedAnimation(parent: _controller, curve: const Interval(0.0, 0.4, curve: Curves.easeOut)),
+    );
+    _textSlide = Tween<Offset>(begin: const Offset(0, 0.3), end: Offset.zero).animate(
+      CurvedAnimation(parent: _controller, curve: const Interval(0.45, 0.85, curve: Curves.easeOut)),
+    );
+    _textOpacity = Tween<double>(begin: 0.0, end: 1.0).animate(
+      CurvedAnimation(parent: _controller, curve: const Interval(0.45, 0.85, curve: Curves.easeOut)),
+    );
 
     _controller.forward();
 
@@ -71,6 +80,8 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
 
   @override
   Widget build(BuildContext context) {
+    final s = S.of(context);
+
     return Scaffold(
       backgroundColor: AppColors.background,
       body: Center(
@@ -87,9 +98,13 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
                     child: Container(
                       width: 96,
                       height: 96,
-                      decoration: BoxDecoration(color: AppColors.surface, borderRadius: BorderRadius.circular(24), border: Border.all(color: AppColors.line)),
+                      decoration: BoxDecoration(
+                        color: AppColors.surface,
+                        borderRadius: BorderRadius.circular(24),
+                        border: Border.all(color: AppColors.line),
+                      ),
                       padding: const EdgeInsets.all(16),
-                      child: Image.asset('assets/images/icon.png', fit: BoxFit.contain),
+                      child: Image.asset('assets/images/logo.jpeg', fit: BoxFit.contain),
                     ),
                   ),
                 ),
@@ -102,7 +117,14 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
                       children: [
                         Text('IrrigaSmart', style: AppTextStyles.title(size: 24, color: AppColors.greenDark)),
                         const SizedBox(height: 4),
-                        const Text('Irrigation intelligente et prévision des besoins en eau', textAlign: TextAlign.center, style: TextStyle(fontSize: 12.5, color: AppColors.muted)),
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 32),
+                          child: Text(
+                            s.splashTagline,
+                            textAlign: TextAlign.center,
+                            style: const TextStyle(fontSize: 12.5, color: AppColors.muted),
+                          ),
+                        ),
                       ],
                     ),
                   ),

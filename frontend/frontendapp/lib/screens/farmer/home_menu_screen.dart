@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
-import '../../providers/auth_provider.dart';
+import '../../l10n/app_strings.dart';
 import '../../theme/app_colors.dart';
 import '../../theme/app_text_styles.dart';
 import '../../widgets/profile_sheet.dart';
@@ -13,7 +12,7 @@ class HomeMenuScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final auth = context.watch<AuthProvider>();
+    final s = S.of(context);
 
     return Scaffold(
       backgroundColor: AppColors.greenSoft,
@@ -25,27 +24,23 @@ class HomeMenuScreen extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  Text('Bienvenue sur', style: AppTextStyles.title(size: 22, color: AppColors.greenDark), textAlign: TextAlign.center),
+                  Text(s.homeWelcome1, style: AppTextStyles.title(size: 22, color: AppColors.greenDark), textAlign: TextAlign.center),
                   Text('IrrigaSmart', style: AppTextStyles.title(size: 22, color: AppColors.greenDark), textAlign: TextAlign.center),
                   const SizedBox(height: 8),
-                  const Text(
-                    'Bienvenue sur votre plateforme de gestion agricole',
+                  Text(
+                    s.homeSubtitleItalic,
                     textAlign: TextAlign.center,
-                    style: TextStyle(fontSize: 13, color: AppColors.greenDark, fontStyle: FontStyle.italic),
+                    style: const TextStyle(fontSize: 13, color: AppColors.greenDark, fontStyle: FontStyle.italic),
                   ),
                   const SizedBox(height: 6),
-                  const Text(
-                    'Gérez vos parcelles, vos capteurs et vos actions',
-                    textAlign: TextAlign.center,
-                    style: AppTextStyles.bodyMuted,
-                  ),
+                  Text(s.homeSubtitle, textAlign: TextAlign.center, style: AppTextStyles.bodyMuted),
                   const SizedBox(height: 26),
                   Row(
                     children: [
                       Expanded(
                         child: _MenuTile(
                           icon: Icons.grass_outlined,
-                          label: 'Parcelles',
+                          label: s.tileParcelles,
                           onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const ParcellesScreen())),
                         ),
                       ),
@@ -53,7 +48,7 @@ class HomeMenuScreen extends StatelessWidget {
                       Expanded(
                         child: _MenuTile(
                           icon: Icons.settings_outlined,
-                          label: 'Paramètres',
+                          label: s.tileParametres,
                           onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const ParametresScreen())),
                         ),
                       ),
@@ -65,7 +60,7 @@ class HomeMenuScreen extends StatelessWidget {
                       Expanded(
                         child: _MenuTile(
                           icon: Icons.person_outline,
-                          label: 'Profil',
+                          label: s.tileProfil,
                           onTap: () => showProfileSheet(context),
                         ),
                       ),
@@ -73,7 +68,7 @@ class HomeMenuScreen extends StatelessWidget {
                       Expanded(
                         child: _MenuTile(
                           icon: Icons.history,
-                          label: 'Historique',
+                          label: s.tileHistorique,
                           onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const HistoriqueScreen())),
                         ),
                       ),
@@ -86,13 +81,9 @@ class HomeMenuScreen extends StatelessWidget {
                     decoration: BoxDecoration(color: AppColors.surface, borderRadius: BorderRadius.circular(16)),
                     child: Column(
                       children: [
-                        Text('Actions rapides', style: AppTextStyles.title(size: 15, color: AppColors.greenDark)),
+                        Text(s.quickActionsTitle, style: AppTextStyles.title(size: 15, color: AppColors.greenDark)),
                         const SizedBox(height: 8),
-                        const Text(
-                          "Surveillez vos parcelles, vérifiez l'état d'irrigation et gérez vos opérations agricoles efficacement.",
-                          textAlign: TextAlign.center,
-                          style: AppTextStyles.bodyMuted,
-                        ),
+                        Text(s.quickActionsBody, textAlign: TextAlign.center, style: AppTextStyles.bodyMuted),
                       ],
                     ),
                   ),
@@ -104,9 +95,7 @@ class HomeMenuScreen extends StatelessWidget {
               bottom: 8,
               child: FloatingActionButton(
                 backgroundColor: AppColors.green,
-                onPressed: () => ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Le chat sera disponible prochainement.')),
-                ),
+                onPressed: () => ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(s.chatComingSoon))),
                 child: const Icon(Icons.chat_bubble_outline, color: Colors.white),
               ),
             ),

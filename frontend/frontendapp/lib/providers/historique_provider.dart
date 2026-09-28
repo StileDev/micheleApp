@@ -12,6 +12,8 @@ class HistoriqueProvider extends ChangeNotifier {
   String? errorMessage;
 
   Future<void> fetchHistorique(int parcelleId) async {
+    actions = [];
+    mesures = [];
     isLoading = true;
     errorMessage = null;
     notifyListeners();

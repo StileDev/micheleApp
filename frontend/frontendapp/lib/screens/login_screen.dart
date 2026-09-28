@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/auth_provider.dart';
+import '../providers/settings_provider.dart';
+import '../l10n/app_strings.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_text_styles.dart';
 import '../widgets/glass_text_field.dart';
@@ -38,6 +40,7 @@ class _LoginScreenState extends State<LoginScreen> {
   @override
   Widget build(BuildContext context) {
     final auth = context.watch<AuthProvider>();
+    final s = S.of(context);
 
     return Scaffold(
       body: Stack(
@@ -49,7 +52,11 @@ class _LoginScreenState extends State<LoginScreen> {
               gradient: LinearGradient(
                 begin: Alignment.topCenter,
                 end: Alignment.bottomCenter,
-                colors: [Color.fromRGBO(10, 25, 14, 0.15), Color.fromRGBO(10, 25, 14, 0.35), Color.fromRGBO(6, 18, 10, 0.85)],
+                colors: [
+                  Color.fromRGBO(10, 25, 14, 0.15),
+                  Color.fromRGBO(10, 25, 14, 0.35),
+                  Color.fromRGBO(6, 18, 10, 0.85),
+                ],
                 stops: [0.0, 0.55, 1.0],
               ),
             ),
@@ -57,12 +64,9 @@ class _LoginScreenState extends State<LoginScreen> {
           SafeArea(
             child: Column(
               children: [
-                Align(
+                const Align(
                   alignment: Alignment.topRight,
-                  child: Padding(
-                    padding: const EdgeInsets.all(16),
-                    child: _LanguagePill(),
-                  ),
+                  child: Padding(padding: EdgeInsets.all(16), child: _LanguagePill()),
                 ),
                 Expanded(
                   child: Align(
@@ -73,18 +77,18 @@ class _LoginScreenState extends State<LoginScreen> {
                         crossAxisAlignment: CrossAxisAlignment.stretch,
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          Text('Connexion à IrrigaSmart', style: AppTextStyles.title(size: 22, color: Colors.white)),
+                          Text(s.loginTitle, style: AppTextStyles.title(size: 22, color: Colors.white)),
                           const SizedBox(height: 4),
-                          const Text('Connectez-vous pour surveiller vos parcelles', style: TextStyle(fontSize: 12.5, color: Colors.white70)),
+                          Text(s.loginSubtitle, style: const TextStyle(fontSize: 12.5, color: Colors.white70)),
                           const SizedBox(height: 20),
-                          GlassTextField(label: 'Adresse email', controller: _email, keyboardType: TextInputType.emailAddress),
-                          GlassTextField(label: 'Mot de passe', controller: _password, obscure: true),
+                          GlassTextField(label: s.email, controller: _email, keyboardType: TextInputType.emailAddress),
+                          GlassTextField(label: s.password, controller: _password, obscure: true),
                           if (auth.errorMessage != null) ...[
                             const SizedBox(height: 4),
                             Text(auth.errorMessage!, style: const TextStyle(color: Colors.orangeAccent, fontSize: 12.5)),
                           ],
                           const SizedBox(height: 8),
-                          PrimaryButton(label: 'Se connecter', onPressed: _submit, loading: auth.isLoading),
+                          PrimaryButton(label: s.signIn, onPressed: _submit, loading: auth.isLoading),
                           const SizedBox(height: 14),
                           Center(
                             child: GestureDetector(
@@ -93,11 +97,14 @@ class _LoginScreenState extends State<LoginScreen> {
                                 Navigator.push(context, MaterialPageRoute(builder: (_) => const RegisterScreen()));
                               },
                               child: RichText(
-                                text: const TextSpan(
-                                  style: TextStyle(fontSize: 13, color: Colors.white70),
+                                text: TextSpan(
+                                  style: const TextStyle(fontSize: 13, color: Colors.white70),
                                   children: [
-                                    TextSpan(text: "Vous n'avez pas de compte ? "),
-                                    TextSpan(text: 'Créer un compte', style: TextStyle(color: AppColors.green, fontWeight: FontWeight.w700)),
+                                    TextSpan(text: s.noAccount),
+                                    TextSpan(
+                                      text: s.createAccount,
+                                      style: const TextStyle(color: AppColors.green, fontWeight: FontWeight.w700),
+                                    ),
                                   ],
                                 ),
                               ),
@@ -117,21 +124,25 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 }
 
-/// Pastille de langue visible sur les captures de référence. Purement
-/// visuelle pour l'instant : l'app n'a qu'une langue (français). Si tu
-/// veux une vraie internationalisation (package `intl` + fichiers .arb),
-/// dis-le-moi, c'est un chantier à part.
+/// Pastille de langue : affiche la langue courante, bascule FR/EN au clic.
 class _LanguagePill extends StatelessWidget {
+  const _LanguagePill();
+
   @override
   Widget build(BuildContext context) {
+    final settings = context.watch<SettingsProvider>();
+
     return GestureDetector(
-      onTap: () => ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Une seule langue disponible pour le moment.')),
-      ),
+      onTap: () => context.read<SettingsProvider>().setLanguage(
+            settings.language == langFr ? langEn : langFr,
+          ),
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
         decoration: BoxDecoration(color: AppColors.green, borderRadius: BorderRadius.circular(20)),
-        child: const Text('FR', style: TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w700)),
+        child: Text(
+          settings.language.toUpperCase(),
+          style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w700),
+        ),
       ),
     );
   }
