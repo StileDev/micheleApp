@@ -1,11 +1,12 @@
 """
-Calcul de la prévision des besoins en eau pour UNE parcelle donnée.
+Calcul de la prévision des besoins en eau ET décision automatique de
+l'irrigation.
 
-Comme précédemment, ce calcul est un point de départ volontairement
-simple (seuil d'humidité du sol), en attendant ton propre modèle de
-prévision — qui est la partie centrale de ton thème académique.
-Remplace `calculer_prevision` par ta vraie logique sans toucher aux vues :
-la forme du JSON retourné doit juste rester la même.
+IMPORTANT : ces deux fonctions contiennent des calculs volontairement
+simples (seuils sur l'humidité du sol), en attendant ton propre modèle
+de prévision — c'est la partie la plus importante de ton thème
+académique. Remplace-les par ta vraie logique sans toucher aux vues :
+la forme des données retournées doit juste rester la même.
 """
 
 SEUIL_HUMIDITE_SOL = 50.0
@@ -48,3 +49,32 @@ def calculer_prevision(derniere_mesure):
     ]
 
     return {'besoin_eau': besoin_eau, 'message': message, 'raisons': raisons, 'courbe': courbe}
+
+
+# --- Décision automatique de l'irrigation ---
+#
+# En mode auto, c'est cette fonction qui décide, à chaque mesure reçue,
+# si la pompe doit tourner — sans aucune intervention de l'agriculteur.
+#
+# Deux seuils différents (plutôt qu'un seul) pour éviter que la pompe
+# s'allume/s'éteigne en boucle quand l'humidité oscille autour d'une
+# valeur unique (hystérésis) :
+#   - en dessous de SEUIL_DEMARRAGE_AUTO -> on démarre l'irrigation
+#   - au dessus de SEUIL_ARRET_AUTO      -> on l'arrête
+#   - entre les deux                      -> on ne change rien
+
+SEUIL_DEMARRAGE_AUTO = 35.0
+SEUIL_ARRET_AUTO = 55.0
+
+
+def decider_irrigation_auto(humidite_sol, irrigation_active_actuellement):
+    """Renvoie True si la pompe doit tourner, False sinon, en fonction de
+    l'humidité du sol et de l'état actuel (pour l'hystérésis)."""
+    if humidite_sol is None:
+        return irrigation_active_actuellement
+
+    if humidite_sol < SEUIL_DEMARRAGE_AUTO:
+        return True
+    if humidite_sol > SEUIL_ARRET_AUTO:
+        return False
+    return irrigation_active_actuellement

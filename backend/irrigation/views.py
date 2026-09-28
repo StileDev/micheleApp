@@ -1,33 +1,77 @@
 from django.shortcuts import get_object_or_404
 from django.utils import timezone
+from asgiref.sync import async_to_sync
+from channels.layers import get_channel_layer
 from rest_framework import generics, status
 from rest_framework.views import APIView
 from rest_framework.response import Response
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import IsAuthenticated, AllowAny
 
-from .models import Parcelle, Materiel, EtatParcelle, ActionLog
+from .models import Parcelle, Materiel, EtatParcelle, ActionLog, Mesure
 from .serializers import (
     ParcelleSerializer,
     MaterielSerializer,
     MesureCreateSerializer,
+    MesureTempsReelSerializer,
+    MesureSerializer,
     ParcelleDetailSerializer,
-    ActionLogSerializer,
+    HistoriqueSerializer,
     PrevisionSerializer,
+    ModeUpdateSerializer,
+    EtatParcelleSerializer,
+    PompeEtatSerializer,
 )
-from .services import calculer_prevision
+from .services import calculer_prevision, decider_irrigation_auto
+
+
+def diffuser_mesure(parcelle, mesure):
+    channel_layer = get_channel_layer()
+    if channel_layer is None:
+        return
+
+    payload = {
+        **MesureSerializer(mesure).data,
+        'etat': EtatParcelleSerializer(parcelle.etat).data,
+    }
+    async_to_sync(channel_layer.group_send)(
+        f'parcelle_{parcelle.id}',
+        {'type': 'mesure.update', 'payload': payload},
+    )
+
+
+def appliquer_decision_auto(parcelle, mesure):
+    etat, _ = EtatParcelle.objects.get_or_create(parcelle=parcelle)
+
+    if etat.irrigation_mode != EtatParcelle.AUTO:
+        return etat
+
+    doit_tourner = decider_irrigation_auto(mesure.humidite_sol, etat.irrigation_active)
+
+    if doit_tourner != etat.irrigation_active:
+        etat.irrigation_active = doit_tourner
+        etat.irrigation_demarree_a = timezone.now() if doit_tourner else None
+        etat.save()
+        ActionLog.objects.create(
+            parcelle=parcelle,
+            statut=ActionLog.DEMARRAGE if doit_tourner else ActionLog.ARRET,
+            declenchee_automatiquement=True,
+        )
+
+    return etat
 
 
 def get_parcelle_du_user(request, parcelle_id):
-    """Une parcelle n'est visible/modifiable que par son propriétaire —
-    on filtre systématiquement sur request.user pour éviter qu'un
-    agriculteur accède aux parcelles d'un autre."""
     return get_object_or_404(Parcelle, id=parcelle_id, user=request.user)
 
 
-class ParcelleListCreateView(generics.ListCreateAPIView):
-    """GET  -> liste des parcelles de l'utilisateur connecté (écran 'Mes Parcelles')
-    POST -> ajoute une parcelle (bouton '+ Ajouter une parcelle')"""
+def get_parcelle_par_device_key(request, parcelle_id):
+    device_key = request.headers.get('X-Device-Key')
+    if not device_key:
+        return None
+    return Parcelle.objects.filter(id=parcelle_id, device_key=device_key).first()
 
+
+class ParcelleListCreateView(generics.ListCreateAPIView):
     permission_classes = [IsAuthenticated]
     serializer_class = ParcelleSerializer
 
@@ -39,8 +83,6 @@ class ParcelleListCreateView(generics.ListCreateAPIView):
 
 
 class ParcelleDeleteView(APIView):
-    """DELETE -> bouton 'Supprimer' sur une parcelle."""
-
     permission_classes = [IsAuthenticated]
 
     def delete(self, request, parcelle_id):
@@ -50,10 +92,6 @@ class ParcelleDeleteView(APIView):
 
 
 class ParcelleDetailView(APIView):
-    """Vue complète d'une parcelle : dernières mesures, état irrigation/
-    drainage, liste des matériels. Alimente l'écran 'Gestion état parcelle
-    et matériels'."""
-
     permission_classes = [IsAuthenticated]
 
     def get(self, request, parcelle_id):
@@ -64,11 +102,11 @@ class ParcelleDetailView(APIView):
         data = {
             'id': parcelle.id,
             'nom': parcelle.nom,
+            'device_key': parcelle.device_key,
             'etat': etat,
             'temperature': derniere_mesure.temperature if derniere_mesure else None,
             'humidite_air': derniere_mesure.humidite_air if derniere_mesure else None,
             'humidite_sol': derniere_mesure.humidite_sol if derniere_mesure else None,
-            'ph_sol': derniere_mesure.ph_sol if derniere_mesure else None,
             'derniere_mesure': derniere_mesure.created_at if derniere_mesure else None,
             'materiels': parcelle.materiels.all(),
         }
@@ -76,9 +114,6 @@ class ParcelleDetailView(APIView):
 
 
 class MaterielListCreateView(generics.ListCreateAPIView):
-    """GET  -> liste des matériels d'une parcelle
-    POST -> ajoute un matériel (champ + bouton 'Ajouter' de l'écran)"""
-
     permission_classes = [IsAuthenticated]
     serializer_class = MaterielSerializer
 
@@ -102,15 +137,64 @@ class MaterielDeleteView(APIView):
 
 
 class MesureCreateView(generics.CreateAPIView):
-    """Appelé par le capteur IoT (ESP32) de la parcelle pour pousser une
-    nouvelle mesure."""
-
-    permission_classes = [IsAuthenticated]
+    permission_classes = [AllowAny]
     serializer_class = MesureCreateSerializer
 
-    def perform_create(self, serializer):
-        parcelle = get_parcelle_du_user(self.request, self.kwargs['parcelle_id'])
-        serializer.save(parcelle=parcelle)
+    def create(self, request, *args, **kwargs):
+        parcelle = get_parcelle_par_device_key(request, self.kwargs['parcelle_id'])
+        if parcelle is None:
+            return Response({'detail': "Clé d'appareil invalide ou manquante (header X-Device-Key)."}, status=401)
+
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        mesure = serializer.save(parcelle=parcelle)
+
+        appliquer_decision_auto(parcelle, mesure)
+        diffuser_mesure(parcelle, mesure)
+
+        return Response(MesureSerializer(mesure).data, status=status.HTTP_201_CREATED)
+
+
+class MesureTempsReelUpdateView(APIView):
+    permission_classes = [AllowAny]
+
+    def patch(self, request, parcelle_id):
+        parcelle = get_parcelle_par_device_key(request, parcelle_id)
+        if parcelle is None:
+            return Response({'detail': "Clé d'appareil invalide ou manquante (header X-Device-Key)."}, status=401)
+
+        serializer = MesureTempsReelSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        payload = serializer.validated_data
+
+        if not payload:
+            return Response({'detail': 'Envoyez au moins un champ à mettre à jour.'}, status=400)
+
+        derniere = parcelle.mesures.first()
+
+        mesure = Mesure.objects.create(
+            parcelle=parcelle,
+            humidite_sol=payload.get('humidite_sol', derniere.humidite_sol if derniere else 0),
+            temperature=payload.get('temperature', derniere.temperature if derniere else 0),
+            humidite_air=payload.get('humidite_air', derniere.humidite_air if derniere else 0),
+        )
+
+        appliquer_decision_auto(parcelle, mesure)
+        diffuser_mesure(parcelle, mesure)
+
+        return Response(MesureSerializer(mesure).data, status=status.HTTP_200_OK)
+
+
+class PompeEtatView(APIView):
+    permission_classes = [AllowAny]
+
+    def get(self, request, parcelle_id):
+        parcelle = get_parcelle_par_device_key(request, parcelle_id)
+        if parcelle is None:
+            return Response({'detail': "Clé d'appareil invalide ou manquante (header X-Device-Key)."}, status=401)
+
+        etat, _ = EtatParcelle.objects.get_or_create(parcelle=parcelle)
+        return Response(PompeEtatSerializer({'irrigation_actif': etat.irrigation_active}).data)
 
 
 class DemarrerIrrigationView(APIView):
@@ -119,11 +203,14 @@ class DemarrerIrrigationView(APIView):
     def post(self, request, parcelle_id):
         parcelle = get_parcelle_du_user(request, parcelle_id)
         etat, _ = EtatParcelle.objects.get_or_create(parcelle=parcelle)
+
+        if etat.irrigation_mode != EtatParcelle.MANUEL:
+            return Response({'detail': "Passez d'abord en mode manuel pour déclencher l'irrigation vous-même."}, status=400)
+
         etat.irrigation_active = True
         etat.irrigation_demarree_a = timezone.now()
         etat.save()
-        ActionLog.objects.create(parcelle=parcelle, type_action=ActionLog.IRRIGATION, statut=ActionLog.DEMARRAGE)
-        # Ici viendra l'appel réel au matériel (pompe/électrovanne) une fois branché.
+        ActionLog.objects.create(parcelle=parcelle, statut=ActionLog.DEMARRAGE)
         return Response({'etat': 'irrigation démarrée'}, status=200)
 
 
@@ -136,46 +223,37 @@ class ArreterIrrigationView(APIView):
         etat.irrigation_active = False
         etat.irrigation_demarree_a = None
         etat.save()
-        ActionLog.objects.create(parcelle=parcelle, type_action=ActionLog.IRRIGATION, statut=ActionLog.ARRET)
+        ActionLog.objects.create(parcelle=parcelle, statut=ActionLog.ARRET)
         return Response({'etat': 'irrigation arrêtée'}, status=200)
 
 
-class DemarrerDrainageView(APIView):
+class IrrigationModeView(APIView):
     permission_classes = [IsAuthenticated]
 
     def post(self, request, parcelle_id):
+        serializer = ModeUpdateSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
         parcelle = get_parcelle_du_user(request, parcelle_id)
         etat, _ = EtatParcelle.objects.get_or_create(parcelle=parcelle)
-        etat.drainage_actif = True
-        etat.drainage_demarre_a = timezone.now()
+        etat.irrigation_mode = serializer.validated_data['mode']
+        etat.irrigation_active = False
+        etat.irrigation_demarree_a = None
         etat.save()
-        ActionLog.objects.create(parcelle=parcelle, type_action=ActionLog.DRAINAGE, statut=ActionLog.DEMARRAGE)
-        return Response({'etat': 'drainage démarré'}, status=200)
 
-
-class ArreterDrainageView(APIView):
-    permission_classes = [IsAuthenticated]
-
-    def post(self, request, parcelle_id):
-        parcelle = get_parcelle_du_user(request, parcelle_id)
-        etat, _ = EtatParcelle.objects.get_or_create(parcelle=parcelle)
-        etat.drainage_actif = False
-        etat.drainage_demarre_a = None
-        etat.save()
-        ActionLog.objects.create(parcelle=parcelle, type_action=ActionLog.DRAINAGE, statut=ActionLog.ARRET)
-        return Response({'etat': 'drainage arrêté'}, status=200)
+        return Response({'irrigation_mode': etat.irrigation_mode})
 
 
 class HistoriqueView(APIView):
-    """Historique des actions (irrigation/drainage) d'une parcelle,
-    pour l'écran 'Historique' du menu d'accueil."""
-
     permission_classes = [IsAuthenticated]
 
     def get(self, request, parcelle_id):
         parcelle = get_parcelle_du_user(request, parcelle_id)
-        actions = parcelle.actions.all()[:50]
-        return Response(ActionLogSerializer(actions, many=True).data)
+        data = {
+            'actions': parcelle.actions.all()[:50],
+            'mesures': parcelle.mesures.all()[:30],
+        }
+        return Response(HistoriqueSerializer(data).data)
 
 
 class PrevisionView(APIView):

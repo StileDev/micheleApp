@@ -8,6 +8,9 @@ class StorageService {
   static const _phoneKey = 'user_phone';
   static const _roleKey = 'user_role';
   static const _idKey = 'user_id';
+  static const _languageKey = 'pref_language';
+  static const _tempUnitKey = 'pref_temp_unit';
+  static const _notifKey = 'pref_notifications';
 
   Future<void> saveSession({
     required String access,
@@ -51,5 +54,24 @@ class StorageService {
     await prefs.remove(_emailKey);
     await prefs.remove(_phoneKey);
     await prefs.remove(_roleKey);
+    // Langue, unité et notifications sont conservées à la déconnexion :
+    // ce sont des réglages de l'appareil, pas du compte.
   }
+
+  // --- Préférences locales, jamais envoyées au serveur ---
+
+  Future<void> setLanguage(String code) async =>
+      (await SharedPreferences.getInstance()).setString(_languageKey, code);
+  Future<String?> getLanguage() async =>
+      (await SharedPreferences.getInstance()).getString(_languageKey);
+
+  Future<void> setTempUnit(String unit) async =>
+      (await SharedPreferences.getInstance()).setString(_tempUnitKey, unit);
+  Future<String?> getTempUnit() async =>
+      (await SharedPreferences.getInstance()).getString(_tempUnitKey);
+
+  Future<void> setNotificationsEnabled(bool value) async =>
+      (await SharedPreferences.getInstance()).setBool(_notifKey, value);
+  Future<bool?> getNotificationsEnabled() async =>
+      (await SharedPreferences.getInstance()).getBool(_notifKey);
 }

@@ -1,7 +1,14 @@
 from django.urls import path
-from .views import UserListView, UserDeactivateView
+from .views import (
+    UserListCreateView,
+    UserDetailView,
+    AdminParcelleListView,
+    AdminParcelleDeleteView,
+)
 
 urlpatterns = [
-    path('users/', UserListView.as_view(), name='admin-user-list'),
-    path('users/<int:pk>/', UserDeactivateView.as_view(), name='admin-user-deactivate'),
+    path('users/', UserListCreateView.as_view(), name='admin-user-list-create'),
+    path('users/<int:pk>/', UserDetailView.as_view(), name='admin-user-detail'),
+    path('parcelles/', AdminParcelleListView.as_view(), name='admin-parcelle-list'),
+    path('parcelles/<int:pk>/', AdminParcelleDeleteView.as_view(), name='admin-parcelle-delete'),
 ]

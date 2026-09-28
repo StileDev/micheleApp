@@ -45,10 +45,19 @@ class ParcelleDetailService {
     }
   }
 
-  Future<SimpleActionResult> demarrerIrrigation(int parcelleId) => _post('/irrigation/parcelles/$parcelleId/irrigation/demarrer/');
-  Future<SimpleActionResult> arreterIrrigation(int parcelleId) => _post('/irrigation/parcelles/$parcelleId/irrigation/arreter/');
-  Future<SimpleActionResult> demarrerDrainage(int parcelleId) => _post('/irrigation/parcelles/$parcelleId/drainage/demarrer/');
-  Future<SimpleActionResult> arreterDrainage(int parcelleId) => _post('/irrigation/parcelles/$parcelleId/drainage/arreter/');
+  Future<SimpleActionResult> setIrrigationMode(int parcelleId, String mode) async {
+    try {
+      await _client.dio.post('/irrigation/parcelles/$parcelleId/irrigation/mode/', data: {'mode': mode});
+      return SimpleActionResult(success: true);
+    } on DioException catch (e) {
+      return SimpleActionResult(success: false, error: _extractError(e));
+    }
+  }
+
+  Future<SimpleActionResult> demarrerIrrigation(int parcelleId) =>
+      _post('/irrigation/parcelles/$parcelleId/irrigation/demarrer/');
+  Future<SimpleActionResult> arreterIrrigation(int parcelleId) =>
+      _post('/irrigation/parcelles/$parcelleId/irrigation/arreter/');
 
   Future<SimpleActionResult> _post(String path) async {
     try {

@@ -32,6 +32,9 @@ class RegisterView(generics.CreateAPIView):
 
 
 class LoginView(TokenObtainPairView):
+    """Renvoie access, refresh et les informations de l'utilisateur
+    (dont son rôle) en une seule requête."""
+
     permission_classes = [AllowAny]
     serializer_class = LoginSerializer
 
@@ -43,7 +46,7 @@ class LogoutView(APIView):
         try:
             refresh_token = request.data["refresh"]
             token = RefreshToken(refresh_token)
-            
+            token.blacklist()
             return Response(status=status.HTTP_205_RESET_CONTENT)
         except (KeyError, TokenError):
             return Response(

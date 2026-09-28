@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../providers/parcelle_list_provider.dart';
 import '../../providers/historique_provider.dart';
+import '../../providers/settings_provider.dart';
 import '../../models/parcelle_model.dart';
+import '../../l10n/app_strings.dart';
 import '../../theme/app_colors.dart';
 import '../../theme/app_text_styles.dart';
 import '../../widgets/app_top_bar.dart';
@@ -35,10 +37,12 @@ class _HistoriqueScreenState extends State<HistoriqueScreen> {
   Widget build(BuildContext context) {
     final parcelles = context.watch<ParcelleListProvider>().parcelles;
     final historique = context.watch<HistoriqueProvider>();
+    final settings = context.watch<SettingsProvider>();
+    final s = S.of(context);
 
     return Scaffold(
       backgroundColor: AppColors.background,
-      appBar: const AppTopBar(title: 'Historique', showBack: true),
+      appBar: AppTopBar(title: s.historyTitle, showBack: true),
       body: Column(
         children: [
           if (parcelles.isNotEmpty)
@@ -75,53 +79,116 @@ class _HistoriqueScreenState extends State<HistoriqueScreen> {
                         Text(historique.errorMessage!, style: const TextStyle(color: AppColors.danger, fontSize: 13), textAlign: TextAlign.center),
                         const SizedBox(height: 14),
                         if (_selected != null)
-                          PrimaryButton(label: 'Réessayer', onPressed: () => context.read<HistoriqueProvider>().fetchHistorique(_selected!.id)),
+                          PrimaryButton(
+                            label: s.retry,
+                            onPressed: () => context.read<HistoriqueProvider>().fetchHistorique(_selected!.id),
+                          ),
                       ],
                     ),
                   ),
                 );
               }
-              if (historique.actions.isEmpty) {
-                return const Center(child: Text('Aucune action enregistrée pour cette parcelle', style: AppTextStyles.bodyMuted));
+              if (historique.actions.isEmpty && historique.mesures.isEmpty) {
+                return Center(child: Text(s.historyEmpty, style: AppTextStyles.bodyMuted));
               }
 
-              return ListView.separated(
+              return ListView(
                 padding: const EdgeInsets.fromLTRB(20, 10, 20, 24),
-                itemCount: historique.actions.length,
-                separatorBuilder: (_, __) => const SizedBox(height: 8),
-                itemBuilder: (context, index) {
-                  final a = historique.actions[index];
-                  final color = a.isIrrigation ? AppColors.green : AppColors.blue;
-                  final soft = a.isIrrigation ? AppColors.greenSoft : AppColors.blueSoft;
-
-                  return Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-                    decoration: BoxDecoration(color: AppColors.surface, border: Border.all(color: AppColors.line), borderRadius: BorderRadius.circular(12)),
-                    child: Row(
-                      children: [
-                        Container(
-                          width: 34, height: 34,
-                          decoration: BoxDecoration(color: soft, borderRadius: BorderRadius.circular(10)),
-                          child: Icon(a.isIrrigation ? Icons.water_drop_outlined : Icons.waves, size: 17, color: color),
+                children: [
+                  Text(s.historyActionsTitle, style: AppTextStyles.heading),
+                  const SizedBox(height: 10),
+                  if (historique.actions.isEmpty)
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 14),
+                      child: Text(s.historyNoActions, style: AppTextStyles.bodyMuted),
+                    )
+                  else
+                    ...historique.actions.map((a) {
+                      return Container(
+                        margin: const EdgeInsets.only(bottom: 8),
+                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                        decoration: BoxDecoration(
+                          color: AppColors.surface,
+                          border: Border.all(color: AppColors.line),
+                          borderRadius: BorderRadius.circular(12),
                         ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                '${a.isIrrigation ? "Irrigation" : "Drainage"} — ${a.isDemarrage ? "démarré" : "arrêté"}',
-                                style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
+                        child: Row(
+                          children: [
+                            Container(
+                              width: 34,
+                              height: 34,
+                              decoration: BoxDecoration(color: AppColors.greenSoft, borderRadius: BorderRadius.circular(10)),
+                              child: const Icon(Icons.water_drop_outlined, size: 17, color: AppColors.greenDark),
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    a.isDemarrage ? s.irrigationStarted : s.irrigationStopped,
+                                    style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
+                                  ),
+                                  const SizedBox(height: 2),
+                                  Text(_fmtDateTime(a.createdAt), style: AppTextStyles.caption),
+                                ],
                               ),
-                              const SizedBox(height: 2),
-                              Text(_fmtDateTime(a.createdAt), style: AppTextStyles.caption),
+                            ),
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                              decoration: BoxDecoration(
+                                color: a.declencheeAutomatiquement ? AppColors.blueSoft : AppColors.surfaceAlt,
+                                borderRadius: BorderRadius.circular(20),
+                              ),
+                              child: Text(
+                                a.declencheeAutomatiquement ? s.automaticTag : s.manualTag,
+                                style: TextStyle(
+                                  fontSize: 10.5,
+                                  fontWeight: FontWeight.w600,
+                                  color: a.declencheeAutomatiquement ? AppColors.blueDark : AppColors.muted,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      );
+                    }),
+
+                  const SizedBox(height: 10),
+                  Text(s.historyMesuresTitle, style: AppTextStyles.heading),
+                  const SizedBox(height: 10),
+                  if (historique.mesures.isEmpty)
+                    Text(s.historyNoMesures, style: AppTextStyles.bodyMuted)
+                  else
+                    ...historique.mesures.map((m) => Container(
+                          margin: const EdgeInsets.only(bottom: 8),
+                          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                          decoration: BoxDecoration(
+                            color: AppColors.surface,
+                            border: Border.all(color: AppColors.line),
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: Row(
+                            children: [
+                              Expanded(child: Text(_fmtDateTime(m.createdAt), style: AppTextStyles.caption)),
+                              Text(
+                                '${s.soilLabel} ${m.humiditeSol.toStringAsFixed(0)}%',
+                                style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.greenDark),
+                              ),
+                              const SizedBox(width: 10),
+                              Text(
+                                '${s.airLabel} ${m.humiditeAir.toStringAsFixed(0)}%',
+                                style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.blueDark),
+                              ),
+                              const SizedBox(width: 10),
+                              Text(
+                                '${settings.convertTemp(m.temperature).toStringAsFixed(0)}${settings.tempSuffix}',
+                                style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.danger),
+                              ),
                             ],
                           ),
-                        ),
-                      ],
-                    ),
-                  );
-                },
+                        )),
+                ],
               );
             }),
           ),

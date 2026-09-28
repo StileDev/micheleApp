@@ -1,12 +1,14 @@
 import 'package:dio/dio.dart';
 import 'api_client.dart';
 import '../models/action_log_model.dart';
+import '../models/mesure_model.dart';
 
 class HistoriqueResult {
   final bool success;
   final List<ActionLogModel> actions;
+  final List<MesureModel> mesures;
   final String? error;
-  HistoriqueResult({required this.success, this.actions = const [], this.error});
+  HistoriqueResult({required this.success, this.actions = const [], this.mesures = const [], this.error});
 }
 
 class HistoriqueService {
@@ -15,8 +17,9 @@ class HistoriqueService {
   Future<HistoriqueResult> fetchHistorique(int parcelleId) async {
     try {
       final resp = await _client.dio.get('/irrigation/parcelles/$parcelleId/historique/');
-      final list = (resp.data as List<dynamic>).map((e) => ActionLogModel.fromJson(e as Map<String, dynamic>)).toList();
-      return HistoriqueResult(success: true, actions: list);
+      final actions = (resp.data['actions'] as List<dynamic>).map((e) => ActionLogModel.fromJson(e as Map<String, dynamic>)).toList();
+      final mesures = (resp.data['mesures'] as List<dynamic>).map((e) => MesureModel.fromJson(e as Map<String, dynamic>)).toList();
+      return HistoriqueResult(success: true, actions: actions, mesures: mesures);
     } on DioException catch (e) {
       return HistoriqueResult(success: false, error: _extractError(e));
     }

@@ -2,12 +2,7 @@ import 'package:dio/dio.dart';
 import 'storage_service.dart';
 import '../core/app_globals.dart';
 
-// Adresse du backend. À adapter selon l'environnement :
-//   Émulateur Android -> 'http://10.0.2.2:8000'
-//   Simulateur iOS     -> 'http://127.0.0.1:8000'
-//   Bureau Linux       -> 'http://127.0.0.1:8000'
-//   Test réel          -> URL du backend déployé (HTTPS)
-const String baseUrl = 'http://192.168.1.190:8000';
+const String baseUrl = 'http://10.221.152.167:8000';
 
 class ApiClient {
   final StorageService storage = StorageService();

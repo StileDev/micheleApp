@@ -5,8 +5,8 @@ from .models import Parcelle, Materiel, Mesure, EtatParcelle, ActionLog
 class ParcelleSerializer(serializers.ModelSerializer):
     class Meta:
         model = Parcelle
-        fields = ['id', 'nom', 'superficie', 'culture', 'latitude', 'longitude', 'created_at']
-        read_only_fields = ['id', 'created_at']
+        fields = ['id', 'nom', 'superficie', 'culture', 'latitude', 'longitude', 'created_at', 'device_key']
+        read_only_fields = ['id', 'created_at', 'device_key']
 
 
 class MaterielSerializer(serializers.ModelSerializer):
@@ -19,41 +19,52 @@ class MaterielSerializer(serializers.ModelSerializer):
 class EtatParcelleSerializer(serializers.ModelSerializer):
     class Meta:
         model = EtatParcelle
-        fields = [
-            'iot_connecte',
-            'irrigation_active', 'irrigation_demarree_a',
-            'drainage_actif', 'drainage_demarre_a',
-        ]
+        fields = ['iot_connecte', 'irrigation_mode', 'irrigation_active', 'irrigation_demarree_a']
 
 
 class ParcelleDetailSerializer(serializers.Serializer):
-    """Réponse complète pour l'écran 'Gestion état parcelle et matériels' :
-    infos de la parcelle, dernières mesures, état, liste des matériels."""
-
     id = serializers.IntegerField()
     nom = serializers.CharField()
+    device_key = serializers.CharField()
     etat = EtatParcelleSerializer()
     temperature = serializers.FloatField(allow_null=True)
     humidite_air = serializers.FloatField(allow_null=True)
     humidite_sol = serializers.FloatField(allow_null=True)
-    ph_sol = serializers.FloatField(allow_null=True)
     derniere_mesure = serializers.DateTimeField(allow_null=True)
     materiels = MaterielSerializer(many=True)
 
 
 class MesureCreateSerializer(serializers.ModelSerializer):
-    """Utilisé par le capteur IoT (ESP32) pour pousser une nouvelle mesure
-    sur une parcelle donnée."""
-
     class Meta:
         model = Mesure
-        fields = ['humidite_sol', 'temperature', 'humidite_air', 'ph_sol']
+        fields = ['humidite_sol', 'temperature', 'humidite_air']
+
+
+class MesureTempsReelSerializer(serializers.Serializer):
+    humidite_sol = serializers.FloatField(required=False)
+    temperature = serializers.FloatField(required=False)
+    humidite_air = serializers.FloatField(required=False)
+
+
+class MesureSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Mesure
+        fields = ['humidite_sol', 'temperature', 'humidite_air', 'created_at']
+
+
+class ModeUpdateSerializer(serializers.Serializer):
+    mode = serializers.ChoiceField(choices=EtatParcelle.MODE_CHOICES)
 
 
 class ActionLogSerializer(serializers.ModelSerializer):
     class Meta:
         model = ActionLog
-        fields = ['id', 'type_action', 'statut', 'created_at']
+        fields = ['id', 'statut', 'declenchee_automatiquement', 'created_at']
+
+
+class HistoriqueSerializer(serializers.Serializer):
+    actions = ActionLogSerializer(many=True)
+    mesures = MesureSerializer(many=True)
 
 
 class RaisonPrevisionSerializer(serializers.Serializer):
@@ -71,3 +82,7 @@ class PrevisionSerializer(serializers.Serializer):
     message = serializers.CharField()
     raisons = RaisonPrevisionSerializer(many=True)
     courbe = PointPrevisionSerializer(many=True)
+
+
+class PompeEtatSerializer(serializers.Serializer):
+    irrigation_actif = serializers.BooleanField()

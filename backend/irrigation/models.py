@@ -1,5 +1,10 @@
+import secrets
 from django.db import models
 from django.conf import settings
+
+
+def generer_device_key():
+    return secrets.token_hex(16)  # 32 caractères hexadécimaux, imprévisible
 
 
 class Parcelle(models.Model):
@@ -10,6 +15,11 @@ class Parcelle(models.Model):
     latitude = models.FloatField(null=True, blank=True)
     longitude = models.FloatField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
+
+    # Clé propre à cette parcelle, utilisée UNIQUEMENT par le capteur IoT
+    # (ESP32) pour envoyer ses mesures — indépendante du compte de
+    # l'agriculteur, générée automatiquement, jamais un mot de passe humain.
+    device_key = models.CharField(max_length=32, unique=True, editable=False, default=generer_device_key)
 
     class Meta:
         ordering = ['-created_at']
@@ -48,44 +58,33 @@ class Mesure(models.Model):
     def __str__(self):
         return f"Mesure {self.parcelle.nom} @ {self.created_at:%d/%m %H:%M}"
 
-
 class EtatParcelle(models.Model):
-    """État courant d'une parcelle : irrigation et drainage sont deux
-    actions indépendantes, comme les deux boutons de l'écran WellAgriTech
-    ('Démarrer l'Irrigation' / 'Démarrer le Drainage')."""
+    AUTO = 'auto'
+    MANUEL = 'manuel'
+    MODE_CHOICES = [(AUTO, 'Automatique'), (MANUEL, 'Manuel')]
 
     parcelle = models.OneToOneField(Parcelle, on_delete=models.CASCADE, related_name='etat')
     iot_connecte = models.BooleanField(default=True)
 
+    irrigation_mode = models.CharField(max_length=10, choices=MODE_CHOICES, default=MANUEL)
     irrigation_active = models.BooleanField(default=False)
     irrigation_demarree_a = models.DateTimeField(null=True, blank=True)
-
-    drainage_actif = models.BooleanField(default=False)
-    drainage_demarre_a = models.DateTimeField(null=True, blank=True)
 
     def __str__(self):
         return f"État {self.parcelle.nom}"
 
-
 class ActionLog(models.Model):
-    """Historique des actions déclenchées sur une parcelle (irrigation,
-    drainage), utilisé par l'écran Historique."""
-
-    IRRIGATION = 'irrigation'
-    DRAINAGE = 'drainage'
-    TYPE_CHOICES = [(IRRIGATION, 'Irrigation'), (DRAINAGE, 'Drainage')]
-
     DEMARRAGE = 'demarrage'
     ARRET = 'arret'
     STATUT_CHOICES = [(DEMARRAGE, 'Démarrage'), (ARRET, 'Arrêt')]
 
     parcelle = models.ForeignKey(Parcelle, on_delete=models.CASCADE, related_name='actions')
-    type_action = models.CharField(max_length=20, choices=TYPE_CHOICES)
     statut = models.CharField(max_length=20, choices=STATUT_CHOICES)
+    declenchee_automatiquement = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
         ordering = ['-created_at']
 
     def __str__(self):
-        return f"{self.get_type_action_display()} — {self.get_statut_display()} ({self.parcelle.nom})"
+        return f"Irrigation — {self.get_statut_display()} ({self.parcelle.nom})"
