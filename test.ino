@@ -11,7 +11,7 @@ const char* SERVER_URL   = "https://backend-irrigasmart.com";
 const bool  SERVER_HTTPS = false;  
 
 const int   PARCELLE_ID = 1;
-const char* DEVICE_KEY  = "colle_ici_la_cle_copiee_depuis_l_app"; 
+const char* DEVICE_KEY  = "e12223d54d90ebc897a603b9aa18e4ce"; 
 
 
 #define PIN_DHT            4
